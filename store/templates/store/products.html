@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Products — Organic Store{% endblock title %}
+
+{% block extra_head %}
+<style>
+    .products-banner {
+        background: linear-gradient(160deg, #e8f5e4 0%, #f4f9f4 70%, #ffffff 100%);
+        padding: 80px 0;
+        text-align: center;
+    }
+
+    .products-banner h1 {
+        font-family: 'Caveat', cursive !important;
+        font-size: 2.8rem;
+        color: var(--organic-dark);
+        margin-bottom: 10px;
+    }
+
+    .products-grid {
+        padding: 10px 0;
+    }
+
+    .product-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        transition: transform 0.2s;
+        background: #ffffffd9;
+        text-align: center;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .product-card img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+    }
+
+    .product-card-body {
+        padding: 15px;
+    }
+
+    .product-card-body h5 {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--organic-dark);
+    }
+
+    .product-card-body p {
+        color: #6a9c63;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+
+    .btn-add {
+        background-color: var(--organic-primary);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 20px;
+        transition: 0.2s;
+    }
+
+    .btn-add:hover {
+        background-color: var(--organic-dark);
+    }
+
+    /* Pagination */
+    .pagination {
+        justify-content: center;
+        margin-top: 30px;
+    }
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+
+<!-- PAGE TITLE / BANNER -->
+<section class="products-banner">
+    <h1>Our Products</h1>
+    <p>Fresh, healthy, and organic products for you</p>
+</section>
+
+<!-- FILTER FORM -->
+<section class="d-flex gap-5">
+
+    <div style="max-width: 20%;">
+        <h2>Filters</h2>
+        <form id="filter_form" method="get" action="" class="d-flex flex-column gap-2">
+            {{ filter_form.name.label }}
+            {{ filter_form.name}}
+            <div class="d-flex gap-2 mb-2">
+                
+                <div>
+                    {{ filter_form.min_price.label }}
+                    {{ filter_form.min_price}}
+                </div>
+                <div>
+                    {{ filter_form.max_price.label }}
+                    {{ filter_form.max_price }}
+                </div>
+            </div>
+            <div>
+                {{ filter_form.categories.label }}
+                {{ filter_form.categories}}
+            </div>
+            <hr>
+            <div>
+                {{ filter_form.sorting_key.label }}
+                {{ filter_form.sorting_key }}
+            </div>
+            <div class="d-flex gap-2 ">
+                <button type="submit" class="btn btn-sm btn-success mt-3 w-100">Filter</button>
+                <button type="button" onclick="resetForm(event)" class="btn btn-sm btn-primary mt-3 w-100">Reset</button>
+            </div>
+            
+        </form><br>
+    </div>
+
+<!-- PRODUCTS GRID -->
+    <div class="container products-grid">
+        <h2>Products</h2>
+        <div class="row">
+
+            {% for product in products %}
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card product-card">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    <div class="product-card-body">
+                        <h5>{{ product.name }}</h5>
+                        <p>RS.{{ product.price }}</p>
+                        <a href="{% url 'store:product_detail_page' product.id %}"class="btn-add">View</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-center">No products available.</p>
+            {% endfor %}
+
+        </div>
+
+        <!-- OPTIONAL PAGINATION -->
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if products.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+
+                {% if products.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}">Next</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</section>
+
+
+<script>
+function resetForm(event) {
+    // prevent page reload
+    event.preventDefault();
+
+    // get all input elements in the form
+    const form_inputs = document.getElementById("filter_form").getElementsByTagName("input");
+
+    //for every field, set value to null/false (checkboxes)
+    for (let index = 0; index < form_inputs.length; index++) {
+        const element = form_inputs[index]
+        element.value = null;
+        if (element.checked) element.checked = false;
+    }
+}
+</script>
+
+{% endblock content %}
