@@ -147,7 +147,7 @@
     <div class="cart-summary mt-4">
         <h4>Cart Summary</h4>
         <p>Total: <strong>RS.{{ cart_total|floatformat:2 }}</strong></p>
-        <a href="" class="btn-checkout">Proceed to Checkout</a>
+        <a href="{% url 'store:place_order' %}" class="btn-checkout">Proceed to Checkout</a>
     </div>
 
     {% else %}
