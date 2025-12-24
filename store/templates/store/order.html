@@ -118,11 +118,13 @@
         <h2>{{ order.order_id }}</h2>
         <p class="order_status ">{{ order.status }}</p>
       </div>
-      
-        <form action="{% url 'store:cancel_order' order.id %}" method="post" onsubmit="return confirm('Are you sure you want to cancel this order?')">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-danger">Cancel order</button>
-        </form>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-success" href="{% url 'store:khalti_payment' order.order_id %}">Pay</a>
+          <form action="{% url 'store:cancel_order' order.id %}" method="post" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger">Cancel order</button>
+          </form>
+        </div>
       </div>
     <thead>
       <hr>
@@ -157,14 +159,6 @@
 
   {% endfor %}
 
-  <!-- CART SUMMARY
-  <div class="cart-summary mt-4">
-    <h4>Cart Summary</h4>
-    <p>Total: <strong>RS.{{ cart_total|floatformat:2 }}</strong></p>
-    <a href="{% url 'store:place_order' %}" class="btn-checkout"
-      >Proceed to Checkout</a
-    >
-  </div> -->
 
   <!-- SHIPPING ADDRESS -->
   <div class="cart-summary mt-4">
@@ -175,11 +169,8 @@
   {% else %}
   <p class="text-center">
     Your cart is empty.
-    <a
-      href="{% url 'store:products_page' %}"
-      style="color: var(--organic-primary)"
-      >Shop Now</a
-    >
+    <a href="{% url 'store:products_page' %}"
+      style="color: var(--organic-primary)">Shop Now</a>
   </p>
   {% endif %}
 </section>

@@ -124,3 +124,5 @@ MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+SITE_URL = 'http://127.0.0.1:8000'
+KHALTI_SECRET_KEY = '1d5a263e23994464aeabbc40fe2988d2'
