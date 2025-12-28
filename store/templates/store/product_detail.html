@@ -122,17 +122,33 @@
     .btn-related:hover {
         background-color: var(--organic-dark);
     }
+    .stars i {
+    color: gold;
+    margin-right: 2px;
+    }
+    .details{
+        border:1px solid rgba(0, 0, 0, 0.699);
+        border-radius: 5px;
+    }
+    .set{
+        border: 1px solid rgba(0, 0, 0, 0.607);
+        border-radius: 5px;
+        padding: 10px;
+        background-color: rgba(224, 255, 255, 0.432);
+    }
+
 </style>
 {% endblock extra_head %}
 
 {% block content %}
 <section class="container product-detail">
-    <div class="row g-5">
+    <div class="row g-5 set">
 
         <!-- PRODUCT IMAGE -->
-        <div class="col-md-6">
+        <div class="col-md-6 details">
             <div class="product-image-wrapper">
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                
 
             </div>
 
@@ -154,7 +170,34 @@
             <p class="price"> Rs.{{ product.price }}</p>
             <p class="description">{{ product.description }}</p>
 
-            
+            <h3>All Reviews</h3>
+
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="review">
+                        <strong>{{ review.user.email }}</strong>
+                        <strong>{{ review.user.full_name }}</strong>
+
+                        <div id="stars">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                    <i class="bi bi-star-fill text-warning" data-rating="{{ forloop.counter }}"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-muted" data-rating="{{ forloop.counter }}"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <p>{{ review.text }}</p>
+                        <hr>
+                    </div>
+                {% endfor %}
+                {% else %}
+                <p>No reviews yet.</p>
+            {% endif %}
+
+
+
         </div>
     </div>
 

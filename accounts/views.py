@@ -1,9 +1,13 @@
 from django.shortcuts import render, redirect
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, ShippingAddressForm
 from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from .models import ShippingAddress, CustomUser
+from store.models import Order
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+
 
 
 def register_view(request):
@@ -27,7 +31,6 @@ def login_view(request):
         email = request.POST.get("email")
         password = request.POST.get("password")
         remember_me = request.POST.get("remember")
-        print("remeber", remember_me)
         user = authenticate(request, email=email, password=password)
         if user is not None:
             login(request, user)
@@ -39,6 +42,11 @@ def login_view(request):
                 request.session.set_expiry(0)
 
             messages.success(request, "Logged in successful")
+            
+            #check user either customer or delivery person
+            if user.role == CustomUser.Roles.DELIVERY_PERSON:
+                return redirect("accounts:customer_profile")
+
             return redirect(reverse("accounts:home_page"))
 
         messages.error(request, "Email or password is incorrect")
@@ -54,3 +62,50 @@ def logout_view(request):
 @login_required
 def home_view(request):
     return render(request, "base.html")
+
+@login_required(login_url="accounts:login_page")
+def customer_profile(request):
+    if request.method == "POST":
+        form = ShippingAddressForm(request.POST)
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.user = request.user
+            address.save()
+            return redirect("accounts:customer_profile")
+    else:
+
+        if request.user.role == CustomUser.Roles.CUSTOMER:
+            form = ShippingAddressForm()
+            addresses = ShippingAddress.objects.filter(user=request.user)
+            context = {"form": form, "addresses": addresses}
+        elif request.user.role == CustomUser.Roles.DELIVERY_PERSON:
+            orders = Order.objects.filter(
+                delivery_person=request.user.delivery_profile
+            ).order_by("updated_at")
+
+            pending_orders = orders.filter(status=Order.Status.ON_THE_WAY)
+            delivered_orders = orders.filter(status=Order.Status.DELIVERED)
+            context = {
+                "orders": orders,
+                "pending_orders": pending_orders,
+                "delivered_orders": delivered_orders,
+            }
+
+    return render(request, "accounts/customer_profile.html", context)
+
+
+@login_required(login_url="accounts:login_page")
+@require_POST
+def set_as_delivered(request, order_id):
+    try:
+        order = Order.objects.get(order_id=order_id)
+        order.status = Order.Status.DELIVERED
+        order.save(update_fields=["status"])
+    except Order.DoesNotExist:
+        messages.error(request, "Order not found")
+
+    return redirect("accounts:customer_profile")
+
+
+def admin_dashboard(request):
+    print("admin dashboard")

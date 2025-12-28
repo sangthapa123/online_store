@@ -1,5 +1,7 @@
 from django import forms
-from store.models import Category
+from store.models import Category, Order,Review
+from accounts.models import DeliveryPerson
+
 
 SORTING_CHOICES = [
         ("price_asc", "Price (Low to High)"),
@@ -46,5 +48,55 @@ class ProductFiltereForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"}),
     )
 
+class OrderChangeForm(forms.ModelForm):
 
-   
+    delivery_person = forms.ModelChoiceField(
+        queryset=DeliveryPerson.objects.filter(is_verified=True,is_active=True),
+        required=False,
+    )
+
+    class Meta:
+        model = Order
+        fields = ["delivery_person"]
+
+
+    def save(self, commit=True):
+            if self.cleaned_data["delivery_person"]:
+                self.instance.status = Order.Status.ON_THE_WAY
+            return super().save(commit)
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ["text", "rating"]
+
+        widgets = {
+            "text": forms.Textarea(
+                attrs={"class": "form-control", "placeholder": "Write your review here"}
+            ),
+            "rating": forms.HiddenInput(),
+        }
+
+    def save(self, commit=True, context=None):
+        if not context:
+            raise ValueError("Context with user and product is required")
+
+        user = context.get("user")
+        product = context.get("product")
+
+        if commit:
+            review, created = Review.objects.update_or_create(
+                user=user,
+                product=product,
+                defaults={
+                    "text": self.cleaned_data.get("text"),
+                    "rating": self.cleaned_data.get("rating"),
+                },
+            )
+            return review
+        else:
+            # For commit=False, return unsaved instance
+            review = super().save(commit=False)
+            review.user = user
+            review.product = product
+            return review

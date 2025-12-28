@@ -2,9 +2,9 @@ from pyexpat.errors import messages
 from urllib import request
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from .models import Cart, Product, CartProduct, Order, OrderItem, Payment
+from .models import Cart, Product, CartProduct, Order, OrderItem, Payment, Review
 from django.core.paginator import Paginator
-from .form import ProductFiltereForm
+from .form import ProductFiltereForm,ReviewForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import F, Sum, DecimalField
@@ -94,7 +94,10 @@ def products(request):
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    context = {"product": product}
+    context = {
+        "product": product,
+        "reviews": product.reviews.all().order_by("-created_at"),
+        }
     return render(request, "store/product_detail.html", context)
 
 
@@ -428,4 +431,51 @@ def khalti_payment_response(request):
 
     messages.success(request, "Payment successful. Your order has been confirmed.")
     return redirect("store:order_page")
-    
+
+@login_required(login_url=reverse_lazy("accounts:login_page"))
+def review(request, order_item_id):
+
+    if request.method == "POST":
+        order_item_id = request.POST.get("order_item_id")
+        text = request.POST.get("text")
+        try:
+            rating = int(request.POST.get("rating"))
+            order_item = OrderItem.objects.get(pk=order_item_id)
+        except ValueError:
+            messages.error(request, "Rating must be a number")
+            return redirect("store:review", order_item_id=order_item_id)
+        except OrderItem.DoesNotExist:
+            messages.error(request, "Order item doesn't exists")
+            return redirect("store:review", order_item_id=order_item_id)
+
+        form = ReviewForm(data={"text": text, "rating": rating})
+        if form.is_valid():
+            form.save(context={"product": order_item.product, "user": request.user})
+            return redirect("store:order_page")
+
+        return redirect("store:review", order_item_id=order_item_id)
+
+    try:
+        order_item = OrderItem.objects.get(pk=order_item_id)
+    except OrderItem.DoesNotExist:
+        messages.error(request, "Order item doesn't exists")
+        return redirect("store:order_page")
+
+    form = ReviewForm()
+    try:
+        review = Review.objects.filter(user=request.user, product=order_item.product).get()
+
+    except Review.DoesNotExist:
+        pass
+    except Review.MultipleObjectsReturned:
+        review = Review.objects.filter(
+            user=request.user, product=order_item.product
+        ).first()
+    else:
+        form = ReviewForm(instance=review)
+
+    context = {
+        "order_item": order_item,
+        "form": form,
+    }
+    return render(request, "store/review.html", context)

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Category(models.Model):
@@ -58,11 +59,11 @@ class CartProduct(models.Model):  # through model
 
 class Order(models.Model):
     class Status(models.TextChoices):
-        PENDING = "Pending", "Pending"
-        PAID = "Paid", "paid"
-        CANCELLED = "Cancelled", "Cancelled"
-        SHIPPED = "Shipped", "Shipped"
-        DELIVERED = "Delivered", "Delivered"
+        PENDING = "pending", "Pending"
+        PAID = "paid", "Paid"
+        CANCELLED = "cancelled", "Cancelled"
+        ON_THE_WAY = "on_the_way", "On the way"
+        DELIVERED = "delivered", "Delivered"
 
     user = models.ForeignKey(
         "accounts.CustomUser",
@@ -83,10 +84,18 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+    #Delivery Person
+    delivery_person = models.ForeignKey(
+        "accounts.DeliveryPerson",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
     def __str__(self):
         return f"Order {self.order_id} ({self.user.email})"
 
-
+    
 class OrderItem(models.Model):
     order = models.ForeignKey(
         Order,
@@ -122,7 +131,9 @@ class Payment(models.Model):
         REFUNDED = "refunded", "Refunded"
 
     order = models.OneToOneField(
-        Order, on_delete= models.CASCADE,related_name="payment",
+        Order, 
+        on_delete= models.CASCADE,
+        related_name="payment",
     )
 
     method = models.CharField(max_length=30, choices = Method.choices, default = Method.KHALTI)
@@ -145,4 +156,26 @@ class Payment(models.Model):
     
     def __str__(self):
         return f" {self.order.order_id} - {self.status}"
-    
+
+class Review(models.Model):
+    user = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.PROTECT,
+        related_name="reviews",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+    text = models.TextField(help_text="Write your review here")
+    rating = models.PositiveSmallIntegerField(
+        help_text="Rating out of 5",
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} -> {self.product.name}"

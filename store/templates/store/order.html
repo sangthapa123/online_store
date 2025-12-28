@@ -95,10 +95,9 @@
     }
   }
   .order_status{
-    border : 1px solid black;
     padding : 4px 6px;
     border-radius : 6px;
-    color : black;
+    color : #000808;
     font-weight: 600;
     background: rgb(165, 238, 165);
   }
@@ -116,23 +115,34 @@
     <div class="d-flex gap-4 justify-content-between">
       <div class="d-flex gap-3">
         <h2>{{ order.order_id }}</h2>
-        <p class="order_status ">{{ order.status }}</p>
+        <p class="order_status ">{{ order.get_status_display }}</p>
       </div>
-        <div class="d-flex gap-2">
-          <a class="btn btn-sm btn-success" href="{% url 'store:khalti_payment' order.order_id %}">Pay</a>
-          <form action="{% url 'store:cancel_order' order.id %}" method="post" onsubmit="return confirm('Are you sure you want to cancel this order?')">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-danger">Cancel order</button>
-          </form>
-        </div>
+      <div class="d-flex gap-2">
+
+        
+          {% if order.payment.status != 'Success' %}
+
+            <a href="{% url 'store:khalti_payment' order.order_id %}" class="btn btn-success">Pay</a>
+            <form action="{% url 'store:cancel_order' order.id %}" method="post"
+                onsubmit="return confirm('Are you sure you want to cancel this order?')">
+
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger">Cancel order</button>
+            </form>
+          {% endif %}
       </div>
-    <thead>
+    </div>
       <hr>
+    <thead>
       <tr>
         <th>Product</th>
         <th>Price</th>
         <th>Quantity</th>
         <th>Subtotal</th>
+        {% if request.user.role == "customer"%}
+        <th>Actions</th>
+        {% endif %}
+
       </tr>
     </thead>
     <tbody>
@@ -152,6 +162,11 @@
             {{ item.quantity }}
         </td>
         <td>RS.{{ item.get_total_price }}</td>
+        {% if request.user.role == "customer"%}
+        <td>
+          <a href="{% url 'store:review' item.id %}" class="btn btn-sm btn-success">Review</a>
+        </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>

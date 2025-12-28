@@ -21,6 +21,9 @@ urlpatterns = [
     #khaltiPayment
     path("order/<order_id>/payment/khalti/", views.khalti_payment, name="khalti_payment"),
     path("order/payment/khalti/", views.khalti_payment_response, name="khalti_payment_response"),
+
+    #product review
+    path("order/<order_item_id>/review/", views.review, name="review"),
 ]   
 
 
