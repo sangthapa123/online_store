@@ -15,24 +15,27 @@ from decimal import Decimal
 from django.conf import settings
 import json
 import requests
+from django.views.decorators.cache import cache_page
+# from django.views.decorators.cache import cache
+
 
 
 def home(request):
 
     featured_products = Product.objects.filter(featured=True).order_by("-created_at")[
         :8
-    ]
+    ].only("name", "price", "image")
     # [0:8] means we want only first 8 products
 
     context = {"products": featured_products}
 
     return render(request, "store/home.html", context)
 
-
+@cache_page(10)
 def products(request):
-
+    # print("recomputing.........................................")
     products = Product.objects.all().order_by("-created_at")
-
+    # cache.set("products", products, 10)
     filter_form = ProductFiltereForm(request.GET)
 
     # filtering by name
@@ -191,7 +194,7 @@ def cart(request):
             # for cart_item in cart_products:
             #     cart_total += cart_item.get_total_price
 
-            cart_products = CartProduct.objects.filter(cart=user_cart).annotate(
+            cart_products = CartProduct.objects.select_related("product").filter(cart=user_cart).annotate(
                 subtotal=ExpressionWrapper(
                     F("product__price") * F("quantity"),
                     output_field=DecimalField(max_digits=10, decimal_places=2),
@@ -278,7 +281,10 @@ def cancel_order(request, pk):
 
 @login_required(login_url=reverse_lazy("accounts:login_page"))
 def order(request):
-    orders = Order.objects.filter(user=request.user)
+    
+    # to avoid N+1 problem 
+    # prefetch for ManytoMany
+    orders = Order.objects.prefetch_related("items", "items__product","payment").filter(user=request.user)
 
     context = {"orders": orders}
     return render(request, "store/order.html", context)

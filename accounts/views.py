@@ -7,6 +7,12 @@ from .models import ShippingAddress, CustomUser
 from store.models import Order
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.http import HttpResponse
+import logging
+
+
+logger = logging.getLogger("accounts")
+
 
 
 
@@ -25,9 +31,8 @@ def register_view(request):
 
 
 def login_view(request):
-    print("--------------now user can login -----------------")
-
     if request.method == "POST":
+
         email = request.POST.get("email")
         password = request.POST.get("password")
         remember_me = request.POST.get("remember")
@@ -42,6 +47,9 @@ def login_view(request):
                 request.session.set_expiry(0)
 
             messages.success(request, "Logged in successful")
+
+            # logging to set the info for the user
+            logger.info(f"\n User: {email}, role:{user.role} logged in, remembered :{remember_me}")
             
             #check user either customer or delivery person
             if user.role == CustomUser.Roles.DELIVERY_PERSON:
@@ -55,6 +63,9 @@ def login_view(request):
 
 
 def logout_view(request):
+    # logging to set the info for the user
+    logger.info(f"\n User: {request.user.email}, role:{request.user.role} logged out")
+    
     logout(request)
     return redirect(reverse("accounts:login_page"))
 
@@ -101,6 +112,7 @@ def set_as_delivered(request, order_id):
         order = Order.objects.get(order_id=order_id)
         order.status = Order.Status.DELIVERED
         order.save(update_fields=["status"])
+
     except Order.DoesNotExist:
         messages.error(request, "Order not found")
 
