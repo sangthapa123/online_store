@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'store',
-    'debug_toolbar',  
+    'debug_toolbar', 
+    'background_task', 
     
 ]
 
@@ -327,3 +328,22 @@ LOGGING = {
         },
     },
 }
+# Mailhog email backend for development use
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025
+
+# Real email for production use
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP server
+
+# Provider
+# EMAIL_PORT = 587 #According to Gmail SMTP
+# EMAIL_HOST_USER = 'sang.thapa123@gmail.com'  # Replace with your email
+# EMAIL_HOST_PASSWORD = 'krop owem lqwr sdxq'  # Replace with your app password from Gmail
+# EMAIL_USE_TLS = True    # Set to True if your SMTP server requires TLS
+# EMAIL_USE_SSL = False  # Set to True if your SMTP server requires SSL
+
+# DEFAULT_FROM_EMAIL = 'Online Store <youraccount@gmail.com>'
+
+# Note: TLS AND SSL ARE MUTUALLY EXCLUSIVE AND THEY ARE USED FOR SECURITY PURPOSES(E.G., ENCRYPTION) WHILE SENDING EMAILS.

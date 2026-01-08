@@ -85,15 +85,22 @@ class ReviewForm(forms.ModelForm):
         product = context.get("product")
 
         if commit:
-            review, created = Review.objects.update_or_create(
-                user=user,
-                product=product,
-                defaults={
-                    "text": self.cleaned_data.get("text"),
-                    "rating": self.cleaned_data.get("rating"),
-                },
-            )
-            return review
+            # Check if we're updating an existing review (form has instance)
+            if self.instance and self.instance.pk:
+                # Update existing review
+                self.instance.text = self.cleaned_data.get("text")
+                self.instance.rating = self.cleaned_data.get("rating")
+                self.instance.save()
+                return self.instance
+            else:
+                # Create new review (allows multiple reviews per user/product)
+                review = Review.objects.create(
+                    user=user,
+                    product=product,
+                    text=self.cleaned_data.get("text"),
+                    rating=self.cleaned_data.get("rating"),
+                )
+                return review
         else:
             # For commit=False, return unsaved instance
             review = super().save(commit=False)

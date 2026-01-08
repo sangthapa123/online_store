@@ -16,8 +16,8 @@ from django.conf import settings
 import json
 import requests
 from django.views.decorators.cache import cache_page
+from .import signals
 # from django.views.decorators.cache import cache
-
 
 
 def home(request):
@@ -261,7 +261,7 @@ def place_order(request):
 
     else:
         messages.success(request, "Order placed successfully")
-
+        
         return redirect("store:order_page")
 
 
@@ -468,16 +468,15 @@ def review(request, order_item_id):
         return redirect("store:order_page")
 
     form = ReviewForm()
-    try:
-        review = Review.objects.filter(user=request.user, product=order_item.product).get()
-
-    except Review.DoesNotExist:
-        pass
-    except Review.MultipleObjectsReturned:
-        review = Review.objects.filter(
-            user=request.user, product=order_item.product
-        ).first()
-    else:
+    
+    # CHANGED: Get the most recent review (or None if no reviews exist)
+    review = Review.objects.filter(
+        user=request.user, 
+        product=order_item.product
+    ).order_by('-created_at').first()
+    
+    # If a review exists, populate the form with it
+    if review:
         form = ReviewForm(instance=review)
 
     context = {
